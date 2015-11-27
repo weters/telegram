@@ -160,7 +160,7 @@ func (t *Bot) SetDefaultHandler(dh Handler) {
 var cmdRegex = regexp.MustCompile("^(?i)/([a-z0-9_]+)(?:@([a-z0-9_]+))?(?:\\s+(.*))?\\z")
 
 // HandleUpdate will call an appropriate Handler depending on the UpdateResponse payload.
-func (t *Bot) HandleUpdate(r *http.Request) error {
+func (b *Bot) HandleUpdate(r *http.Request) error {
 	d := json.NewDecoder(r.Body)
 	var ur UpdateResponse
 	if err := d.Decode(&ur); err != nil {
@@ -168,26 +168,34 @@ func (t *Bot) HandleUpdate(r *http.Request) error {
 	}
 
 	if match := cmdRegex.FindStringSubmatch(ur.Message.Text); match != nil {
-		if match[2] != "" && match[2] != t.BotName {
+		if match[2] != "" && match[2] != b.BotName {
 			return nil
 		}
 
-		h, ok := t.CommandHandlers[match[1]]
+		h, ok := b.CommandHandlers[match[1]]
 		if ok {
-			h(t, &ur, match[3])
+			h(b, &ur, match[3])
 		}
 	} else {
-		if ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == t.BotName {
-			h, ok := t.ReplyHandlers[ur.Message.ReplyToMessage.Text]
+		if ur.IsBotReply(b) {
+			h, ok := b.ReplyHandlers[ur.Message.ReplyToMessage.Text]
 			if ok {
-				h(t, &ur, "")
+				h(b, &ur, "")
+				return nil
 			}
-		} else if t.DefaultHandler != nil {
-			t.DefaultHandler(t, &ur, "")
+		}
+
+		if b.DefaultHandler != nil {
+			b.DefaultHandler(b, &ur, "")
 		}
 	}
 
 	return nil
+}
+
+// IsBotReply will return true if the message received is a reply to a message from the bot.
+func (ur *UpdateResponse) IsBotReply(b *Bot) bool {
+	return ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == b.BotName
 }
 
 // PostSendMessage will post a message to Telegram's sendMessage method.

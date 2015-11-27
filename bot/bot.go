@@ -10,10 +10,11 @@ import (
 
 // Telegram represents a Bot.
 type Bot struct {
-	BotName        string
-	Token          string
-	Handlers       map[string]Handler
-	DefaultHandler Handler
+	BotName         string
+	Token           string
+	CommandHandlers map[string]Handler
+	ReplyHandlers   map[string]Handler
+	DefaultHandler  Handler
 }
 
 // User represents a Telegram user or bot.
@@ -85,8 +86,13 @@ type UpdateResponse struct {
 }
 
 // IsGroup returns true if the chat type is "group"
-func (p *UpdateResponse) IsGroup() bool {
-	return p.Message.Chat.Type == "group"
+func (ur *UpdateResponse) IsGroup() bool {
+	return ur.Message.Chat.Type == "group"
+}
+
+// ChatID is an accessor to p.Message.Chat.ID
+func (ur *UpdateResponse) ChatID() int {
+	return ur.Message.Chat.ID
 }
 
 // ReplyMarkup actually contains three Telegram objects in one: the ReplyKeyboardMarkup, ReplyKeyboardHide, and ForceReply objects.
@@ -121,9 +127,10 @@ type Handler func(t *Bot, ur *UpdateResponse, args string)
 // New instantiates a new Telegram instance.
 func New(botName, token string) *Bot {
 	return &Bot{
-		BotName:  botName,
-		Token:    token,
-		Handlers: make(map[string]Handler),
+		BotName:         botName,
+		Token:           token,
+		CommandHandlers: make(map[string]Handler),
+		ReplyHandlers:   make(map[string]Handler),
 	}
 }
 
@@ -134,7 +141,14 @@ func New(botName, token string) *Bot {
 //
 // When a user types "/help" or "/help@YourBot", the HelpHandler will be called.
 func (t *Bot) AddCommandHandler(c string, ch Handler) {
-	t.Handlers[c] = ch
+	t.CommandHandlers[c] = ch
+}
+
+// AddReplyHandler will register a Handler with a specific reply.
+//
+// These handlers are called when a user replies to your bot's message/question. "rm" will be the original question.
+func (t *Bot) AddReplyHandler(rm string, rh Handler) {
+	t.ReplyHandlers[rm] = rh
 }
 
 // SetDefaultHandler wil register a default handler to be called if a message was received
@@ -158,12 +172,17 @@ func (t *Bot) HandleUpdate(r *http.Request) error {
 			return nil
 		}
 
-		h, ok := t.Handlers[match[1]]
+		h, ok := t.CommandHandlers[match[1]]
 		if ok {
 			h(t, &ur, match[3])
 		}
 	} else {
-		if t.DefaultHandler != nil {
+		if ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == t.BotName {
+			h, ok := t.ReplyHandlers[ur.Message.ReplyToMessage.Text]
+			if ok {
+				h(t, &ur, "")
+			}
+		} else if t.DefaultHandler != nil {
 			t.DefaultHandler(t, &ur, "")
 		}
 	}

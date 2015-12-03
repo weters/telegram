@@ -18,12 +18,12 @@ const (
 
 // Telegram represents a Bot.
 type Bot struct {
-	BotName         string
-	Token           string
-	CommandHandlers map[string]Handler
-	ReplyHandlers   map[string]Handler
-	DefaultHandler  Handler
-	Debug           bool
+	BotName               string
+	Token                 string
+	CommandHandlers       map[string]Handler
+	DefaultHandler        Handler
+	BeforeCommandCallback Callback
+	Debug                 bool
 }
 
 // User represents a Telegram user or bot.
@@ -143,13 +143,15 @@ type SendMessage struct {
 // Handler represents a function that can handle an update from Telegram.
 type Handler func(t *Bot, ur *UpdateResponse, args string)
 
+// Callback represents a function that can handle a callback.
+type Callback func(t *Bot, ur *UpdateResponse)
+
 // New instantiates a new Telegram instance.
 func New(botName, token string) *Bot {
 	return &Bot{
 		BotName:         botName,
 		Token:           token,
 		CommandHandlers: make(map[string]Handler),
-		ReplyHandlers:   make(map[string]Handler),
 	}
 }
 
@@ -159,21 +161,18 @@ func New(botName, token string) *Bot {
 //   t.AddCommandHandler("help", HelpHandler)
 //
 // When a user types "/help" or "/help@YourBot", the HelpHandler will be called.
-func (t *Bot) AddCommandHandler(c string, ch Handler) {
-	t.CommandHandlers[c] = ch
-}
-
-// AddReplyHandler will register a Handler with a specific reply.
-//
-// These handlers are called when a user replies to your bot's message/question. "rm" will be the original question.
-func (t *Bot) AddReplyHandler(rm string, rh Handler) {
-	t.ReplyHandlers[rm] = rh
+func (b *Bot) AddCommandHandler(c string, ch Handler) {
+	b.CommandHandlers[c] = ch
 }
 
 // SetDefaultHandler wil register a default handler to be called if a message was received
 // and it wasn't a command.
-func (t *Bot) SetDefaultHandler(dh Handler) {
-	t.DefaultHandler = dh
+func (b *Bot) SetDefaultHandler(dh Handler) {
+	b.DefaultHandler = dh
+}
+
+func (b *Bot) SetBeforeCommandCallback(cb Callback) {
+	b.BeforeCommandCallback = cb
 }
 
 var cmdRegex = regexp.MustCompile("^(?i)/([a-z0-9_]+)(?:@([a-z0-9_]+))?(?:\\s+(.*))?\\z")
@@ -192,26 +191,20 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 	}
 
 	if match := cmdRegex.FindStringSubmatch(ur.Message.Text); match != nil {
+		// It's a command, but it's not intended for our bot
 		if match[2] != "" && match[2] != b.BotName {
 			return nil
 		}
 
-		h, ok := b.CommandHandlers[match[1]]
-		if ok {
-			h(b, &ur, match[3])
-		}
-	} else {
-		if ur.IsBotReply(b) {
-			h, ok := b.ReplyHandlers[ur.Message.ReplyToMessage.Text]
-			if ok {
-				h(b, &ur, "")
-				return nil
-			}
+		if cb := b.BeforeCommandCallback; b != nil {
+			cb(b, &ur)
 		}
 
-		if b.DefaultHandler != nil {
-			b.DefaultHandler(b, &ur, "")
+		if h, ok := b.CommandHandlers[match[1]]; ok {
+			h(b, &ur, match[3])
 		}
+	} else if b.DefaultHandler != nil {
+		b.DefaultHandler(b, &ur, "")
 	}
 
 	return nil

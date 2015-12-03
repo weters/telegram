@@ -97,6 +97,11 @@ func (ur *UpdateResponse) ChatID() int {
 	return ur.Message.Chat.ID
 }
 
+// FromID is an accessor to p.Message.From.ID
+func (ur *UpdateResponse) FromID() int {
+	return ur.Message.From.ID
+}
+
 // ReplyMarkup actually contains three Telegram objects in one: the ReplyKeyboardMarkup, ReplyKeyboardHide, and ForceReply objects.
 type ReplyMarkup struct {
 	// ReplyKeyboardMarkup

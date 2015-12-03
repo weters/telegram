@@ -4,6 +4,7 @@ package bot
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -15,6 +16,7 @@ type Bot struct {
 	CommandHandlers map[string]Handler
 	ReplyHandlers   map[string]Handler
 	DefaultHandler  Handler
+	Debug           bool
 }
 
 // User represents a Telegram user or bot.
@@ -165,6 +167,11 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 	var ur UpdateResponse
 	if err := d.Decode(&ur); err != nil {
 		return err
+	}
+
+	if b.Debug {
+		copy, _ := json.Marshal(ur)
+		log.Printf("%s\n", copy)
 	}
 
 	if match := cmdRegex.FindStringSubmatch(ur.Message.Text); match != nil {

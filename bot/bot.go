@@ -9,6 +9,13 @@ import (
 	"regexp"
 )
 
+const (
+	ChatTypePrivate    = "private"
+	ChatTypeGroup      = "group"
+	ChatTypeSupergroup = "supergroup"
+	ChatTypeChannel    = "channel"
+)
+
 // Telegram represents a Bot.
 type Bot struct {
 	BotName         string
@@ -89,7 +96,12 @@ type UpdateResponse struct {
 
 // IsGroup returns true if the chat type is "group"
 func (ur *UpdateResponse) IsGroup() bool {
-	return ur.Message.Chat.Type == "group"
+	return ur.Message.Chat.Type == ChatTypeGroup
+}
+
+// IsGroup returns true if the chat type is "private"
+func (ur *UpdateResponse) IsPrivate() bool {
+	return ur.Message.Chat.Type == ChatTypePrivate
 }
 
 // ChatID is an accessor to p.Message.Chat.ID

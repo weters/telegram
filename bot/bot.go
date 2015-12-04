@@ -4,6 +4,7 @@ package bot
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"regexp"
@@ -27,6 +28,8 @@ type Bot struct {
 	BeforeCommandCallback Callback
 	Debug                 bool
 	Session               Session
+
+	botDirectMsgRegex *regexp.Regexp
 }
 
 // Handler represents a function that can handle an update from Telegram.
@@ -41,10 +44,11 @@ type Callback func(b *Bot, ur *UpdateResponse)
 // New instantiates a new Telegram instance.
 func New(botName, token string) *Bot {
 	return &Bot{
-		BotName:         botName,
-		Token:           token,
-		CommandHandlers: make(map[string]Handler),
-		SessionHandlers: make(map[int]SessionHandler),
+		BotName:           botName,
+		Token:             token,
+		CommandHandlers:   make(map[string]Handler),
+		SessionHandlers:   make(map[int]SessionHandler),
+		botDirectMsgRegex: regexp.MustCompile(fmt.Sprintf("^@%s\\s+", botName)),
 	}
 }
 
@@ -81,6 +85,8 @@ func (b *Bot) SetSession(s Session) {
 var cmdRegex = regexp.MustCompile("^(?i)/([a-z0-9_]+)(?:@([a-z0-9_]+))?(?:\\s+(.*))?\\z")
 
 // HandleUpdate will call an appropriate Handler depending on the UpdateResponse payload.
+// Attempts to find a command handler. If not found, attempts to find a session handler if there
+// is an active session. Finally the default handler is called.
 func (b *Bot) HandleUpdate(r *http.Request) error {
 	d := json.NewDecoder(r.Body)
 	var ur UpdateResponse
@@ -109,6 +115,10 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 
 		return nil
 	}
+
+	// if this was a direct message, strip out the bot name callout
+	// "@My_Bot Hello" -> "Hello"
+	ur.Message.Text = b.botDirectMsgRegex.ReplaceAllLiteralString(ur.Message.Text, "")
 
 	if b.Session != nil {
 		s, err := b.Session.SessionByAuthorIDAndChatID(ur.FromID(), ur.ChatID())

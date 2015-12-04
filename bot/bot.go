@@ -105,7 +105,7 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 			return nil
 		}
 
-		if cb := b.BeforeCommandCallback; b != nil {
+		if cb := b.BeforeCommandCallback; cb != nil {
 			cb(b, &ur)
 		}
 

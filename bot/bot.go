@@ -22,13 +22,18 @@ type Bot struct {
 	BotName               string
 	Token                 string
 	CommandHandlers       map[string]Handler
+	SessionHandlers       map[int]SessionHandler
 	DefaultHandler        Handler
 	BeforeCommandCallback Callback
 	Debug                 bool
+	Session               Session
 }
 
 // Handler represents a function that can handle an update from Telegram.
 type Handler func(b *Bot, ur *UpdateResponse, args string)
+
+// SessionHandler represents a function that can handle an update from Telegram with a session active.
+type SessionHandler func(b *Bot, ur *UpdateResponse, s SessionRecord)
 
 // Callback represents a function that can handle a callback.
 type Callback func(b *Bot, ur *UpdateResponse)
@@ -39,6 +44,7 @@ func New(botName, token string) *Bot {
 		BotName:         botName,
 		Token:           token,
 		CommandHandlers: make(map[string]Handler),
+		SessionHandlers: make(map[int]SessionHandler),
 	}
 }
 
@@ -52,6 +58,10 @@ func (b *Bot) AddCommandHandler(c string, ch Handler) {
 	b.CommandHandlers[c] = ch
 }
 
+func (b *Bot) AddSessionHandler(sID int, sh SessionHandler) {
+	b.SessionHandlers[sID] = sh
+}
+
 // SetDefaultHandler wil register a default handler to be called if a message was received
 // and it wasn't a command.
 func (b *Bot) SetDefaultHandler(dh Handler) {
@@ -61,6 +71,11 @@ func (b *Bot) SetDefaultHandler(dh Handler) {
 // SetBeforeCommandCallback will set a callback which is executed before a command is executed.
 func (b *Bot) SetBeforeCommandCallback(cb Callback) {
 	b.BeforeCommandCallback = cb
+}
+
+// SetSession sets the session object which is responsible for getting, setting, and deleting sessions.
+func (b *Bot) SetSession(s Session) {
+	b.Session = s
 }
 
 var cmdRegex = regexp.MustCompile("^(?i)/([a-z0-9_]+)(?:@([a-z0-9_]+))?(?:\\s+(.*))?\\z")
@@ -91,7 +106,27 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 		if h, ok := b.CommandHandlers[match[1]]; ok {
 			h(b, &ur, match[3])
 		}
-	} else if b.DefaultHandler != nil {
+
+		return nil
+	}
+
+	if b.Session != nil {
+		s, err := b.Session.SessionByAuthorIDAndChatID(ur.FromID(), ur.ChatID())
+		if err != nil {
+			return err
+		}
+
+		if s != nil {
+			b.Session.DeleteSessionByAuthorIDAndChatID(ur.FromID(), ur.ChatID())
+
+			if h, ok := b.SessionHandlers[s.StateID()]; ok {
+				h(b, &ur, s)
+				return nil
+			}
+		}
+	}
+
+	if b.DefaultHandler != nil {
 		b.DefaultHandler(b, &ur, "")
 	}
 
@@ -100,13 +135,13 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 
 // PostSendMessage will post a message to Telegram's sendMessage method.
 func (b *Bot) PostSendMessage(msg *SendMessage) error {
-	b := &bytes.Buffer{}
-	j := json.NewEncoder(b)
+	bts := &bytes.Buffer{}
+	j := json.NewEncoder(bts)
 	if err := j.Encode(msg); err != nil {
 		return err
 	}
 
-	r, err := http.NewRequest("POST", b.URL("sendMessage"), b)
+	r, err := http.NewRequest("POST", b.URL("sendMessage"), bts)
 	if err != nil {
 		return err
 	}

@@ -1,17 +1,17 @@
 package bot
 
+// Defines the various chat types in Telegram
+const (
+	ChatTypePrivate    = "private"
+	ChatTypeGroup      = "group"
+	ChatTypeSupergroup = "supergroup"
+	ChatTypeChannel    = "channel"
+)
+
 // UpdateResponse represents a response from a Telegram getUpdates method call.
 type UpdateResponse struct {
 	UpdateID int      `json:"update_id"`
 	Message  *Message `json:"message"`
-}
-
-// User represents a Telegram user or bot.
-type User struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name,omitempty"`
-	Username  string `json:"username,omitempty"`
 }
 
 // Chat represents a Telegram chat.
@@ -55,19 +55,6 @@ type Message struct {
 	MigrateFromChatID int `json:"migrate_from_chat_id,omitempty"`
 }
 
-// DisplayName will return the display name of the user or bot.
-func (u *User) DisplayName() string {
-	if u.Username != "" {
-		return u.Username
-	}
-
-	if u.LastName != "" {
-		return u.FirstName + " " + u.LastName
-	}
-
-	return u.FirstName
-}
-
 // IsGroup returns true if the chat type is "group"
 func (ur *UpdateResponse) IsGroup() bool {
 	return ur.Message.Chat.Type == ChatTypeGroup
@@ -90,5 +77,5 @@ func (ur *UpdateResponse) FromID() int {
 
 // IsBotReply will return true if the message received is a reply to a message from the bot.
 func (ur *UpdateResponse) IsBotReply(b *Bot) bool {
-	return ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == b.BotName
+	return ur.Message != nil && ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == b.BotName
 }

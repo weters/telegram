@@ -10,14 +10,6 @@ import (
 	"regexp"
 )
 
-// Defines the various chat types in Telegram
-const (
-	ChatTypePrivate    = "private"
-	ChatTypeGroup      = "group"
-	ChatTypeSupergroup = "supergroup"
-	ChatTypeChannel    = "channel"
-)
-
 // Bot represents a Telegram bot.
 type Bot struct {
 	BotName               string

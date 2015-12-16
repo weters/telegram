@@ -4,10 +4,16 @@ package bot
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strconv"
 )
 
 // Bot represents a Telegram bot.
@@ -131,6 +137,62 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 	if b.DefaultHandler != nil {
 		b.DefaultHandler(b, &ur, "")
 	}
+
+	return nil
+}
+
+func (b *Bot) PostSendDocument(document *SendDocument) error {
+	if document.Document == "" {
+		return errors.New("bot: Document not specified")
+	}
+
+	file, err := os.Open(document.Document)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("document", filepath.Base(document.Document))
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		return err
+	}
+
+	writer.WriteField("chat_id", strconv.Itoa(document.ChatID))
+
+	if document.ReplyToMessageID > 0 {
+		writer.WriteField("reply_to_message_id", strconv.Itoa(document.ReplyToMessageID))
+	}
+
+	if document.ReplyMarkup != nil {
+		b, err := json.Marshal(document.ReplyMarkup)
+		if err != nil {
+			return err
+		}
+
+		writer.WriteField("reply_markup", string(b))
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	r, err := http.NewRequest("POST", b.URL("sendDocument"), body)
+	if err != nil {
+		return err
+	}
+
+	r.Close = true
+
+	resp, err := http.Post(b.URL("sendDocument"), writer.FormDataContentType(), body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
 	return nil
 }

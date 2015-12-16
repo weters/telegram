@@ -25,3 +25,11 @@ type SendMessage struct {
 	ReplyToMessageID      int          `json:"reply_to_message_id,omitempty"`
 	ReplyMarkup           *ReplyMarkup `json:"reply_markup"`
 }
+
+// SendDocument represents the payload that needs to be sent to Telegram's sendDocument method.
+type SendDocument struct {
+	ChatID           int          `json:"chat_id"`
+	Document         string       `json:"-"`
+	ReplyToMessageID int          `json:"reply_to_message_id,omitempty"`
+	ReplyMarkup      *ReplyMarkup `json:"reply_markup"`
+}

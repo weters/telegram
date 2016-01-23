@@ -28,6 +28,9 @@ type Bot struct {
 	Session               Session
 
 	botDirectMsgRegex *regexp.Regexp
+
+	// allow us to inject a client for testing
+	client *http.Client
 }
 
 // Handler represents a function that can handle an update from Telegram.
@@ -47,6 +50,7 @@ func New(botName, token string) *Bot {
 		CommandHandlers:   make(map[string]Handler),
 		SessionHandlers:   make(map[int]SessionHandler),
 		botDirectMsgRegex: regexp.MustCompile(fmt.Sprintf("^@%s\\s+", botName)),
+		client:            http.DefaultClient,
 	}
 }
 
@@ -60,6 +64,7 @@ func (b *Bot) AddCommandHandler(c string, ch Handler) {
 	b.CommandHandlers[c] = ch
 }
 
+// AddSessionHandler will register a SessionHandler for a given sID
 func (b *Bot) AddSessionHandler(sID int, sh SessionHandler) {
 	b.SessionHandlers[sID] = sh
 }
@@ -188,7 +193,7 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 
 	r.Close = true
 
-	resp, err := http.Post(b.URL("sendDocument"), writer.FormDataContentType(), body)
+	resp, err := b.client.Post(b.URL("sendDocument"), writer.FormDataContentType(), body)
 	if err != nil {
 		return err
 	}
@@ -211,8 +216,7 @@ func (b *Bot) PostSendMessage(msg *SendMessage) error {
 	}
 
 	r.Header.Set("Content-Type", "application/json")
-	c := http.Client{}
-	resp, err := c.Do(r)
+	resp, err := b.client.Do(r)
 	if err != nil {
 		return err
 	}

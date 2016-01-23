@@ -6,6 +6,8 @@ Package telegram/bot handles interactions with the Telegram Bot API.
     * If you implement bot.Session, you can use an external database to
       maintain sessions for users between requests.
 
+## Basic Example
+
 Here's a basic example. We setup a command handler to listen for either "/hello <name>"
 or "/hello@Super_Bot <name>". When the command is called, we will reply to user with "Hello <name>".
 
@@ -26,6 +28,8 @@ or "/hello@Super_Bot <name>". When the command is called, we will reply to user 
     })
 
     log.Fatal(http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", nil))
+
+## Example With Session Handling
 
 Here's a little more indepth one. We'll use the session mechanism so we can ask the user a question
 and have the bot maintain state until the user responds.

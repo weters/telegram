@@ -202,27 +202,38 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 	return nil
 }
 
-// PostSendMessage will post a message to Telegram's sendMessage method.
-func (b *Bot) PostSendMessage(msg *SendMessage) error {
+// PostSendMessageWithResult will send a message and return the result from the server.
+func (b *Bot) PostSendMessageWithResult(msg *SendMessage) (*MessageResult, error) {
 	bts := &bytes.Buffer{}
 	j := json.NewEncoder(bts)
 	if err := j.Encode(msg); err != nil {
-		return err
+		return nil, err
 	}
 
 	r, err := http.NewRequest("POST", b.URL("sendMessage"), bts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.Header.Set("Content-Type", "application/json")
 	resp, err := b.client.Do(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	return nil
+	dec := json.NewDecoder(resp.Body)
+	var result MessageResult
+	if err := dec.Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+// PostSendMessage will post a message to Telegram's sendMessage method.
+func (b *Bot) PostSendMessage(msg *SendMessage) error {
+	_, err := b.PostSendMessageWithResult(msg)
+	return err
 }
 
 // URL returns the correct Telegram URL to use.

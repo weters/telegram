@@ -229,6 +229,44 @@ func (b *Bot) PostSendMessage(msg *SendMessage) error {
 	return err
 }
 
+// SetWebhook will post a message to Telegram's setWebhook method. This will allow the bot
+// to register with Telegram for notifications.
+func (b *Bot) SetWebhook(uri string, certFile string) error {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	if certFile != "" {
+		file, err := os.Open(certFile)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		part, err := writer.CreateFormFile("certificate", filepath.Base(certFile))
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(part, file); err != nil {
+			return err
+		}
+	}
+
+	writer.WriteField("url", uri)
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	resp, err := b.client.Post(b.URL("setWebhook"), writer.FormDataContentType(), body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // URL returns the correct Telegram URL to use.
 func (b *Bot) URL(m string) string {
 	return "https://api.telegram.org/bot" + b.Token + "/" + m

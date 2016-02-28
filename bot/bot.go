@@ -186,13 +186,6 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 		return err
 	}
 
-	r, err := http.NewRequest("POST", b.URL("sendDocument"), body)
-	if err != nil {
-		return err
-	}
-
-	r.Close = true
-
 	resp, err := b.client.Post(b.URL("sendDocument"), writer.FormDataContentType(), body)
 	if err != nil {
 		return err

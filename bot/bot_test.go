@@ -135,12 +135,24 @@ func TestSessionForOtherChatID(t *testing.T) {
 	})
 }
 
+func TestURL(t *testing.T) {
+	b := New("Test_Bot", "mysecrettoken")
+	assert.Equal(t, "https://api.telegram.org/botmysecrettoken/foo", b.URL("foo"))
+}
+
 type testRoundTripper struct {
-	request *http.Request
+	request  *http.Request
+	response string
+}
+
+func newTestRoundTripper(response string) *testRoundTripper {
+	return &testRoundTripper{
+		response: response,
+	}
 }
 
 func (rt *testRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	body := strings.NewReader(`{"ok":true,"result":{"message_id":12345,"text":"test"}}`)
+	body := strings.NewReader(rt.response)
 	bodyCloser := ioutil.NopCloser(body)
 
 	rt.request = r
@@ -159,8 +171,58 @@ func (rt *testRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return response, nil
 }
 
+func TestSetWebhook(t *testing.T) {
+	transport := newTestRoundTripper(`{"ok":true}`)
+
+	c := &http.Client{
+		Transport: transport,
+	}
+
+	b := New("Test_Bot", "mysecrettoken")
+	b.client = c
+	err := b.SetWebhook("https://mysite", "")
+	assert.NoError(t, err)
+
+	req := transport.request
+	assert.Equal(t, "https://api.telegram.org/botmysecrettoken/setWebhook", transport.request.URL.String())
+
+	url := req.FormValue("url")
+	assert.Equal(t, "https://mysite", url)
+}
+
+func TestSetWebhookWithCert(t *testing.T) {
+	transport := newTestRoundTripper(`{"ok":true}`)
+
+	c := &http.Client{
+		Transport: transport,
+	}
+
+	b := New("Test_Bot", "mysecrettoken")
+	b.client = c
+
+	err := b.SetWebhook("https://mysite", "bad_file")
+	assert.Error(t, err)
+	assert.Equal(t, "open bad_file: no such file or directory", err.Error())
+
+	err = b.SetWebhook("https://mysite", "test_publiccert.pem")
+	assert.NoError(t, err)
+
+	req := transport.request
+	assert.Equal(t, "https://api.telegram.org/botmysecrettoken/setWebhook", transport.request.URL.String())
+
+	url := req.FormValue("url")
+	assert.Equal(t, "https://mysite", url)
+
+	file, header, err := req.FormFile("certificate")
+	assert.NoError(t, err)
+	contents, err := ioutil.ReadAll(file)
+	assert.NoError(t, err)
+	assert.Equal(t, "publiccert\n", string(contents))
+	assert.Equal(t, "test_publiccert.pem", header.Filename)
+}
+
 func TestPostSendMessage(t *testing.T) {
-	transport := &testRoundTripper{}
+	transport := newTestRoundTripper(`{"ok":true,"result":{"message_id":12345,"text":"test"}}`)
 
 	c := &http.Client{
 		Transport: transport,

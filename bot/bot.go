@@ -146,6 +146,7 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 	return nil
 }
 
+// PostSendDocument will send a document and return the result from the server.
 func (b *Bot) PostSendDocument(document *SendDocument) error {
 	if document.Document == "" {
 		return errors.New("bot: Document not specified")
@@ -195,8 +196,8 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 	return nil
 }
 
-// PostSendMessageWithResult will send a message and return the result from the server.
-func (b *Bot) PostSendMessageWithResult(msg *SendMessage) (*MessageResult, error) {
+// PostSendMessage will send a message and return the result from the server.
+func (b *Bot) PostSendMessage(msg *SendMessage) (*MessageResult, error) {
 	bts := &bytes.Buffer{}
 	j := json.NewEncoder(bts)
 	if err := j.Encode(msg); err != nil {
@@ -221,12 +222,6 @@ func (b *Bot) PostSendMessageWithResult(msg *SendMessage) (*MessageResult, error
 		return nil, err
 	}
 	return &result, err
-}
-
-// PostSendMessage will post a message to Telegram's sendMessage method.
-func (b *Bot) PostSendMessage(msg *SendMessage) error {
-	_, err := b.PostSendMessageWithResult(msg)
-	return err
 }
 
 // SetWebhook will post a message to Telegram's setWebhook method. This will allow the bot

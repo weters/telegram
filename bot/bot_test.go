@@ -159,39 +159,6 @@ func (rt *testRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return response, nil
 }
 
-func TestPostSendMessageWithResult(t *testing.T) {
-	transport := &testRoundTripper{}
-
-	c := &http.Client{
-		Transport: transport,
-	}
-
-	b := New("Test_Bot", "mysecrettoken")
-	b.client = c
-
-	msg := &SendMessage{
-		ChatID:           1000,
-		Text:             "This is my message",
-		ReplyToMessageID: 500,
-		ReplyMarkup: &ReplyMarkup{
-			Keyboard:        [][]string{[]string{"One", "Two"}, []string{"Three", "Four"}},
-			ResizeKeyboard:  false,
-			OneTimeKeyboard: true,
-			HideKeyboard:    false,
-			ForceReply:      true,
-			Selective:       false,
-		},
-	}
-
-	result, err := b.PostSendMessageWithResult(msg)
-	assert.NoError(t, err)
-	assert.Equal(t, 12345, result.Result.ID)
-
-	defer transport.request.Body.Close()
-	body, _ := ioutil.ReadAll(transport.request.Body)
-	assert.Equal(t, `{"chat_id":1000,"text":"This is my message","reply_to_message_id":500,"reply_markup":{"keyboard":[["One","Two"],["Three","Four"]],"one_time_keyboard":true,"force_reply":true}}`, string(body[:len(body)-1]))
-}
-
 func TestPostSendMessage(t *testing.T) {
 	transport := &testRoundTripper{}
 
@@ -216,8 +183,9 @@ func TestPostSendMessage(t *testing.T) {
 		},
 	}
 
-	err := b.PostSendMessage(msg)
+	result, err := b.PostSendMessage(msg)
 	assert.NoError(t, err)
+	assert.Equal(t, 12345, result.Result.ID)
 
 	defer transport.request.Body.Close()
 	body, _ := ioutil.ReadAll(transport.request.Body)

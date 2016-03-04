@@ -18,14 +18,15 @@ import (
 
 // Bot represents a Telegram bot.
 type Bot struct {
-	BotName               string
-	Token                 string
-	CommandHandlers       map[string]Handler
-	SessionHandlers       map[int]SessionHandler
-	DefaultHandler        Handler
-	BeforeCommandCallback Callback
-	Debug                 bool
-	Session               Session
+	BotName                string
+	Token                  string
+	CommandHandlers        map[string]Handler
+	CommandPatternHandlers map[*regexp.Regexp]PatternHandler
+	SessionHandlers        map[int]SessionHandler
+	DefaultHandler         Handler
+	BeforeCommandCallback  Callback
+	Debug                  bool
+	Session                Session
 
 	botDirectMsgRegex *regexp.Regexp
 
@@ -36,6 +37,9 @@ type Bot struct {
 // Handler represents a function that can handle an update from Telegram.
 type Handler func(b *Bot, ur *UpdateResponse, args string)
 
+// PatternHandler represents a function that can handle an update from Telegram.
+type PatternHandler func(b *Bot, ur *UpdateResponse, matches []string)
+
 // SessionHandler represents a function that can handle an update from Telegram with a session active.
 type SessionHandler func(b *Bot, ur *UpdateResponse, s SessionRecord)
 
@@ -45,12 +49,13 @@ type Callback func(b *Bot, ur *UpdateResponse)
 // New instantiates a new Telegram instance.
 func New(botName, token string) *Bot {
 	return &Bot{
-		BotName:           botName,
-		Token:             token,
-		CommandHandlers:   make(map[string]Handler),
-		SessionHandlers:   make(map[int]SessionHandler),
-		botDirectMsgRegex: regexp.MustCompile(fmt.Sprintf("^@%s\\s+", botName)),
-		client:            http.DefaultClient,
+		BotName:                botName,
+		Token:                  token,
+		CommandHandlers:        make(map[string]Handler),
+		CommandPatternHandlers: make(map[*regexp.Regexp]PatternHandler),
+		SessionHandlers:        make(map[int]SessionHandler),
+		botDirectMsgRegex:      regexp.MustCompile(fmt.Sprintf("^@%s\\s+", botName)),
+		client:                 http.DefaultClient,
 	}
 }
 
@@ -62,6 +67,16 @@ func New(botName, token string) *Bot {
 // When a user types "/help" or "/help@YourBot", the HelpHandler will be called.
 func (b *Bot) AddCommandHandler(c string, ch Handler) {
 	b.CommandHandlers[c] = ch
+}
+
+// AddCommandPatternHandler will register a Handler with a specific pattern.
+//
+// Example:
+//   b.AddCommandPatternHandler(regexp.MustCompile("delete\\d+"), DeleteHandler)
+//
+// When a user types "/help" or "/help@YourBot", the HelpHandler will be called.
+func (b *Bot) AddCommandPatternHandler(r *regexp.Regexp, ph PatternHandler) {
+	b.CommandPatternHandlers[r] = ph
 }
 
 // AddSessionHandler will register a SessionHandler for a given sID
@@ -114,6 +129,12 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 
 		if h, ok := b.CommandHandlers[match[1]]; ok {
 			h(b, &ur, match[3])
+		} else {
+			for r, h := range b.CommandPatternHandlers {
+				if matches := r.FindStringSubmatch(match[1]); matches != nil {
+					h(b, &ur, matches)
+				}
+			}
 		}
 
 		return nil

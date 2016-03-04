@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -17,6 +18,7 @@ type capture struct {
 	sessionHandlerCalled  bool
 	callbackHandlerCalled bool
 	defaultHandlerCalled  bool
+	deleteHandlerCalled   bool
 }
 
 func (c *capture) helpHandler(b *Bot, u *UpdateResponse, args string) {
@@ -26,6 +28,15 @@ func (c *capture) helpHandler(b *Bot, u *UpdateResponse, args string) {
 	assert.Equal(c.t, 2, c.callCount)
 	assert.Equal(c.t, "my options", args)
 	assert.Equal(c.t, "/help@Test_Bot my options", u.Message.Text)
+}
+
+func (c *capture) deleteHandler(b *Bot, u *UpdateResponse, matches []string) {
+	c.deleteHandlerCalled = true
+	c.callCount += 1
+
+	assert.Equal(c.t, 2, c.callCount)
+	assert.Equal(c.t, []string{"delete1234", "1234"}, matches)
+	assert.Equal(c.t, "/delete1234@Test_Bot", u.Message.Text)
 }
 
 func (c *capture) sessionHandler(b *Bot, u *UpdateResponse, s SessionRecord) {
@@ -69,6 +80,7 @@ func runTest(t *testing.T, body string, checks func(c *capture)) {
 
 	b.AddCommandHandler("help", c.helpHandler)
 	b.AddSessionHandler(100, c.sessionHandler)
+	b.AddCommandPatternHandler(regexp.MustCompile("^delete(\\d+)$"), c.deleteHandler)
 	b.SetDefaultHandler(c.defaultHandler)
 	b.SetBeforeCommandCallback(c.callbackHandler)
 	b.SetSession(s)
@@ -85,6 +97,7 @@ func TestDefaultHandler(t *testing.T) {
 	runTest(t, body, func(c *capture) {
 		assert.False(t, c.callbackHandlerCalled)
 		assert.False(t, c.helpHandlerCalled)
+		assert.False(t, c.deleteHandlerCalled)
 		assert.False(t, c.sessionHandlerCalled)
 		assert.True(t, c.defaultHandlerCalled)
 	})
@@ -96,6 +109,7 @@ func TestCommand(t *testing.T) {
 	runTest(t, body, func(c *capture) {
 		assert.True(t, c.callbackHandlerCalled)
 		assert.True(t, c.helpHandlerCalled)
+		assert.False(t, c.deleteHandlerCalled)
 		assert.False(t, c.sessionHandlerCalled)
 		assert.False(t, c.defaultHandlerCalled)
 	})
@@ -108,6 +122,19 @@ func TestCommandForOtherBot(t *testing.T) {
 		// none of the handlers should be called
 		assert.False(t, c.callbackHandlerCalled)
 		assert.False(t, c.helpHandlerCalled)
+		assert.False(t, c.deleteHandlerCalled)
+		assert.False(t, c.sessionHandlerCalled)
+		assert.False(t, c.defaultHandlerCalled)
+	})
+}
+
+func TestCommandPattern(t *testing.T) {
+	body := `{"update_id":258492060,"message":{"message_id":6261,"from":{"id":756606558,"first_name":"John","last_name":"Doe"},"date":1453514214,"chat":{"id":-974763016,"type":"group","title":"Test","first_name":""},"text":"/delete1234@Test_Bot"}}`
+
+	runTest(t, body, func(c *capture) {
+		assert.True(t, c.callbackHandlerCalled)
+		assert.False(t, c.helpHandlerCalled)
+		assert.True(t, c.deleteHandlerCalled)
 		assert.False(t, c.sessionHandlerCalled)
 		assert.False(t, c.defaultHandlerCalled)
 	})
@@ -119,6 +146,7 @@ func TestSession(t *testing.T) {
 	runTest(t, body, func(c *capture) {
 		assert.False(t, c.callbackHandlerCalled)
 		assert.False(t, c.helpHandlerCalled)
+		assert.False(t, c.deleteHandlerCalled)
 		assert.True(t, c.sessionHandlerCalled)
 		assert.False(t, c.defaultHandlerCalled)
 	})
@@ -130,6 +158,7 @@ func TestSessionForOtherChatID(t *testing.T) {
 	runTest(t, body, func(c *capture) {
 		assert.False(t, c.callbackHandlerCalled)
 		assert.False(t, c.helpHandlerCalled)
+		assert.False(t, c.deleteHandlerCalled)
 		assert.False(t, c.sessionHandlerCalled)
 		assert.True(t, c.defaultHandlerCalled)
 	})

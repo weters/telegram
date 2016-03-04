@@ -21,6 +21,7 @@ type ReplyMarkup struct {
 type SendMessage struct {
 	ChatID                int          `json:"chat_id"`
 	Text                  string       `json:"text"`
+	ParseMode             string       `json:"parse_mode"`
 	DisableWebPagePreview bool         `json:"disable_web_page_preview,omitempty"`
 	ReplyToMessageID      int          `json:"reply_to_message_id,omitempty"`
 	ReplyMarkup           *ReplyMarkup `json:"reply_markup"`

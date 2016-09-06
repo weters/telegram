@@ -112,9 +112,15 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 		return err
 	}
 
+	if ur.Message == nil {
+		copy, _ := json.Marshal(ur)
+		log.Printf("Error: null message found: %s\n", copy)
+		return errors.New("null message found")
+	}
+
 	if b.Debug {
 		copy, _ := json.Marshal(ur)
-		log.Printf("%s\n", copy)
+		log.Printf("received in %s: %s\n", b.BotName, copy)
 	}
 
 	if match := cmdRegex.FindStringSubmatch(ur.Message.Text); match != nil {

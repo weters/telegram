@@ -281,7 +281,7 @@ func TestPostSendMessage(t *testing.T) {
 
 	defer transport.request.Body.Close()
 	body, _ := ioutil.ReadAll(transport.request.Body)
-	assert.Equal(t, `{"chat_id":1000,"text":"This is my message","parse_mode":"Markdown","reply_to_message_id":500,"reply_markup":{"keyboard":[["One","Two"],["Three","Four"]],"one_time_keyboard":true,"force_reply":true}}`, string(body[:len(body)-1]))
+	assert.Equal(t, `{"chat_id":1000,"text":"This is my message","parse_mode":"Markdown","disable_notification":false,"reply_to_message_id":500,"reply_markup":{"keyboard":[["One","Two"],["Three","Four"]],"one_time_keyboard":true,"force_reply":true}}`, string(body[:len(body)-1]))
 }
 
 type testSessionRecord struct {

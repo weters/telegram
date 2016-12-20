@@ -223,15 +223,14 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 	return nil
 }
 
-// PostSendMessage will send a message and return the result from the server.
-func (b *Bot) PostSendMessage(msg *SendMessage) (*MessageResult, error) {
+func (b *Bot) genericPost(endpoint string, msg interface{}) (*MessageResult, error) {
 	bts := &bytes.Buffer{}
 	j := json.NewEncoder(bts)
 	if err := j.Encode(msg); err != nil {
 		return nil, err
 	}
 
-	r, err := http.NewRequest("POST", b.URL("sendMessage"), bts)
+	r, err := http.NewRequest("POST", b.URL(endpoint), bts)
 	if err != nil {
 		return nil, err
 	}
@@ -249,6 +248,16 @@ func (b *Bot) PostSendMessage(msg *SendMessage) (*MessageResult, error) {
 		return nil, err
 	}
 	return &result, err
+}
+
+// PostSendMessage will send a message and return the result from the server.
+func (b *Bot) PostSendMessage(msg *SendMessage) (*MessageResult, error) {
+	return b.genericPost("sendMessage", msg)
+}
+
+// PostEditMessageText will send a message and return the result from the server.
+func (b *Bot) PostEditMessageText(msg *EditMessageText) (*MessageResult, error) {
+	return b.genericPost("editMessageText", msg)
 }
 
 // SetWebhook will post a message to Telegram's setWebhook method. This will allow the bot

@@ -28,6 +28,16 @@ type SendMessage struct {
 	ReplyMarkup           *ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
+// EditMessageText represents the payload that needs to be sent to Telegram's editMessageText method.
+type EditMessageText struct {
+	ChatID                int          `json:"chat_id"`
+	MessageID             int          `json:"message_id"`
+	Text                  string       `json:"text"`
+	ParseMode             string       `json:"parse_mode"`
+	DisableWebPagePreview bool         `json:"disable_web_page_preview,omitempty"`
+	ReplyMarkup           *ReplyMarkup `json:"reply_markup,omitempty"`
+}
+
 // SendDocument represents the payload that needs to be sent to Telegram's sendDocument method.
 type SendDocument struct {
 	ChatID           int          `json:"chat_id"`

@@ -247,6 +247,10 @@ func (b *Bot) genericPost(endpoint string, msg interface{}) (*MessageResult, err
 	if err := dec.Decode(&result); err != nil {
 		return nil, err
 	}
+
+	if !result.OK {
+		return &result, fmt.Errorf("bot: failed request to %s { %d, %s }", endpoint, result.ErrorCode, result.Description)
+	}
 	return &result, err
 }
 

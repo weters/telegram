@@ -1,5 +1,10 @@
 package bot
 
+import (
+	"encoding/json"
+	"log"
+)
+
 // Defines the various chat types in Telegram
 const (
 	ChatTypePrivate    = "private"
@@ -10,8 +15,11 @@ const (
 
 // UpdateResponse represents a response from a Telegram getUpdates method call.
 type UpdateResponse struct {
-	UpdateID int      `json:"update_id"`
-	Message  *Message `json:"message"`
+	UpdateID          int      `json:"update_id"`
+	Message           *Message `json:"message"`
+	EditedMessage     *Message `json:"edited_message"`
+	ChannelPost       *Message `json:"channel_post"`
+	EditedChannelPost *Message `json:"edited_channel_post"`
 }
 
 // Chat represents a Telegram chat.
@@ -78,4 +86,15 @@ func (ur *UpdateResponse) FromID() int {
 // IsBotReply will return true if the message received is a reply to a message from the bot.
 func (ur *UpdateResponse) IsBotReply(b *Bot) bool {
 	return ur.Message != nil && ur.Message.ReplyToMessage != nil && ur.Message.ReplyToMessage.From.Username == b.BotName
+}
+
+// String will return a string representation
+func (u *UpdateResponse) String() string {
+	s, err := json.Marshal(u)
+	if err != nil {
+		log.Printf("error: could not marshal update response: %s\n", err)
+		return ""
+	}
+
+	return string(s)
 }

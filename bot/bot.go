@@ -113,8 +113,27 @@ func (b *Bot) HandleUpdate(r *http.Request) error {
 	}
 
 	if ur.Message == nil {
-		copy, _ := json.Marshal(ur)
-		log.Printf("Error: null message found: %s\n", copy)
+		if ur.EditedMessage != nil {
+			if b.Debug {
+				log.Printf("edited message received, but I cannot handle this yet: %s\n", ur.String())
+			}
+
+			return nil
+		} else if ur.ChannelPost != nil {
+			if b.Debug {
+				log.Printf("channel post received, but I cannot handle this yet: %s\n", ur.String())
+			}
+
+			return nil
+		} else if ur.EditedChannelPost != nil {
+			if b.Debug {
+				log.Printf("edited channel post received, but I cannot handle this yet: %s\n", ur.String())
+			}
+
+			return nil
+		}
+
+		log.Printf("error: null message found: %s\n", ur.String())
 		return errors.New("null message found")
 	}
 

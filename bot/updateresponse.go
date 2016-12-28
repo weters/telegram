@@ -65,7 +65,7 @@ type Message struct {
 
 // IsGroup returns true if the chat type is "group"
 func (ur *UpdateResponse) IsGroup() bool {
-	return ur.Message.Chat.Type == ChatTypeGroup
+	return ur.Message.Chat.Type == ChatTypeGroup || ur.Message.Chat.Type == ChatTypeSupergroup
 }
 
 // IsPrivate returns true if the chat type is "private"

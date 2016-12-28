@@ -24,6 +24,11 @@ func TestType(t *testing.T) {
 
 	assert.True(t, u.IsGroup())
 	assert.False(t, u.IsPrivate())
+
+	u.Message.Chat.Type = ChatTypeSupergroup
+
+	assert.True(t, u.IsGroup())
+	assert.False(t, u.IsPrivate())
 }
 
 func TestChatID(t *testing.T) {

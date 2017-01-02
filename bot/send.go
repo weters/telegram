@@ -19,19 +19,19 @@ type ReplyMarkup struct {
 
 // SendMessage represents the payload that needs to be sent to Telegram's sendMessage method.
 type SendMessage struct {
-	ChatID                int          `json:"chat_id"`
+	ChatID                int64        `json:"chat_id"`
 	Text                  string       `json:"text"`
 	ParseMode             string       `json:"parse_mode"`
 	DisableWebPagePreview bool         `json:"disable_web_page_preview,omitempty"`
 	DisableNotification   bool         `json:"disable_notification"`
-	ReplyToMessageID      int          `json:"reply_to_message_id,omitempty"`
+	ReplyToMessageID      int64        `json:"reply_to_message_id,omitempty"`
 	ReplyMarkup           *ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // EditMessageText represents the payload that needs to be sent to Telegram's editMessageText method.
 type EditMessageText struct {
-	ChatID                int          `json:"chat_id"`
-	MessageID             int          `json:"message_id"`
+	ChatID                int64        `json:"chat_id"`
+	MessageID             int64        `json:"message_id"`
 	Text                  string       `json:"text"`
 	ParseMode             string       `json:"parse_mode"`
 	DisableWebPagePreview bool         `json:"disable_web_page_preview,omitempty"`
@@ -40,8 +40,8 @@ type EditMessageText struct {
 
 // SendDocument represents the payload that needs to be sent to Telegram's sendDocument method.
 type SendDocument struct {
-	ChatID           int          `json:"chat_id"`
+	ChatID           int64        `json:"chat_id"`
 	Document         string       `json:"-"`
-	ReplyToMessageID int          `json:"reply_to_message_id,omitempty"`
+	ReplyToMessageID int64        `json:"reply_to_message_id,omitempty"`
 	ReplyMarkup      *ReplyMarkup `json:"reply_markup"`
 }

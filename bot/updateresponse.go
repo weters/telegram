@@ -15,7 +15,7 @@ const (
 
 // UpdateResponse represents a response from a Telegram getUpdates method call.
 type UpdateResponse struct {
-	UpdateID          int      `json:"update_id"`
+	UpdateID          int64    `json:"update_id"`
 	Message           *Message `json:"message"`
 	EditedMessage     *Message `json:"edited_message"`
 	ChannelPost       *Message `json:"channel_post"`
@@ -24,7 +24,7 @@ type UpdateResponse struct {
 
 // Chat represents a Telegram chat.
 type Chat struct {
-	ID        int    `json:"id"`
+	ID        int64  `json:"id"`
 	Type      string `json:"type,omitempty"` // private group supergroup channel
 	Title     string `json:"title,omitempty"`
 	Username  string `json:"username,omitempty"`
@@ -34,7 +34,7 @@ type Chat struct {
 
 // Message represents a Telegram message.
 type Message struct {
-	ID             int      `json:"message_id"`
+	ID             int64    `json:"message_id"`
 	From           *User    `json:"from,omitempty"`
 	Date           int      `json:"date"`
 	Chat           *Chat    `json:"chat"`
@@ -59,8 +59,8 @@ type Message struct {
 	GroupChatCreated      bool `json:"group_chat_created,omitempty"`
 	SupergroupChatCreated bool `json:"supergroup_chat_created,omitempty"`
 	// ChannelChatCreated
-	MigrateToChatID   int `json:"migrate_to_chat_id,omitempty"`
-	MigrateFromChatID int `json:"migrate_from_chat_id,omitempty"`
+	MigrateToChatID   int64 `json:"migrate_to_chat_id,omitempty"`
+	MigrateFromChatID int64 `json:"migrate_from_chat_id,omitempty"`
 }
 
 // IsGroup returns true if the chat type is "group"
@@ -74,12 +74,12 @@ func (ur *UpdateResponse) IsPrivate() bool {
 }
 
 // ChatID is an accessor to p.Message.Chat.ID
-func (ur *UpdateResponse) ChatID() int {
+func (ur *UpdateResponse) ChatID() int64 {
 	return ur.Message.Chat.ID
 }
 
 // FromID is an accessor to p.Message.From.ID
-func (ur *UpdateResponse) FromID() int {
+func (ur *UpdateResponse) FromID() int64 {
 	return ur.Message.From.ID
 }
 

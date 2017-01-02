@@ -10,19 +10,19 @@ import (
 
 // Record represents an individual session.
 type Record struct {
-	authorID int
-	chatID   int
+	authorID int64
+	chatID   int64
 	stateID  int
 	data     string
 }
 
 // AuthorID returns the value found in u.Message.From.ID
-func (s *Record) AuthorID() int {
+func (s *Record) AuthorID() int64 {
 	return s.authorID
 }
 
 // ChatID returns the chat ID found in u.Message.Chat.ID.
-func (s *Record) ChatID() int {
+func (s *Record) ChatID() int64 {
 	return s.chatID
 }
 
@@ -51,7 +51,7 @@ func NewMemorySession() *MemorySession {
 }
 
 // SetSession sets a session for a user in a chat.
-func (m *MemorySession) SetSession(authorID, chatID, stateID int, data string) error {
+func (m *MemorySession) SetSession(authorID, chatID int64, stateID int, data string) error {
 	s := &Record{
 		authorID: authorID,
 		chatID:   chatID,
@@ -69,7 +69,7 @@ func (m *MemorySession) SetSession(authorID, chatID, stateID int, data string) e
 }
 
 // DeleteSessionByAuthorIDAndChatID deletes a session for a user in a chat
-func (m *MemorySession) DeleteSessionByAuthorIDAndChatID(authorID, chatID int) error {
+func (m *MemorySession) DeleteSessionByAuthorIDAndChatID(authorID, chatID int64) error {
 	key := m.key(authorID, chatID)
 
 	m.mutex.Lock()
@@ -81,7 +81,7 @@ func (m *MemorySession) DeleteSessionByAuthorIDAndChatID(authorID, chatID int) e
 
 // SessionByAuthorIDAndChatID returns a session for a user. If there is no session, but otherwise there was no error,
 // (nil, nil) will be returned.
-func (m *MemorySession) SessionByAuthorIDAndChatID(authorID, chatID int) (bot.SessionRecord, error) {
+func (m *MemorySession) SessionByAuthorIDAndChatID(authorID, chatID int64) (bot.SessionRecord, error) {
 	key := m.key(authorID, chatID)
 
 	m.mutex.RLock()
@@ -91,6 +91,6 @@ func (m *MemorySession) SessionByAuthorIDAndChatID(authorID, chatID int) (bot.Se
 	return s, nil
 }
 
-func (m *MemorySession) key(authorID, chatID int) string {
+func (m *MemorySession) key(authorID, chatID int64) string {
 	return fmt.Sprintf("%d:%d", authorID, chatID)
 }

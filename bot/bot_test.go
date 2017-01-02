@@ -277,7 +277,7 @@ func TestPostSendMessage(t *testing.T) {
 
 	result, err := b.PostSendMessage(msg)
 	assert.NoError(t, err)
-	assert.Equal(t, 12345, result.Result.ID)
+	assert.Equal(t, int64(12345), result.Result.ID)
 
 	defer transport.request.Body.Close()
 	body, _ := ioutil.ReadAll(transport.request.Body)
@@ -285,17 +285,17 @@ func TestPostSendMessage(t *testing.T) {
 }
 
 type testSessionRecord struct {
-	authorID int
-	chatID   int
+	authorID int64
+	chatID   int64
 	stateID  int
 	data     string
 }
 
-func (r *testSessionRecord) AuthorID() int {
+func (r *testSessionRecord) AuthorID() int64 {
 	return r.authorID
 }
 
-func (r *testSessionRecord) ChatID() int {
+func (r *testSessionRecord) ChatID() int64 {
 	return r.chatID
 }
 
@@ -317,25 +317,25 @@ func newTestSession() *testSession {
 	}
 }
 
-func (s *testSession) key(authorID, chatID int) string {
+func (s *testSession) key(authorID, chatID int64) string {
 	return fmt.Sprintf("%d.%d", authorID, chatID)
 }
 
 // SetSession should set a session for a user in a chat.
-func (s *testSession) SetSession(authorID, chatID, stateID int, data string) error {
+func (s *testSession) SetSession(authorID, chatID int64, stateID int, data string) error {
 	s.data[s.key(authorID, chatID)] = &testSessionRecord{authorID, chatID, stateID, data}
 	return nil
 }
 
 // DeleteSessionByAuthorIDAndChatID should delete a session for a user in a chat
-func (s *testSession) DeleteSessionByAuthorIDAndChatID(authorID, chatID int) error {
+func (s *testSession) DeleteSessionByAuthorIDAndChatID(authorID, chatID int64) error {
 	delete(s.data, s.key(authorID, chatID))
 	return nil
 }
 
 // SessionByAuthorIDAndChatID should return a session for a user. If there is no session, but otherwise there was no error,
 // (nil, nil) should be returned.
-func (s *testSession) SessionByAuthorIDAndChatID(authorID, chatID int) (SessionRecord, error) {
+func (s *testSession) SessionByAuthorIDAndChatID(authorID, chatID int64) (SessionRecord, error) {
 	r, ok := s.data[s.key(authorID, chatID)]
 	if !ok {
 		return nil, nil

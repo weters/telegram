@@ -40,7 +40,7 @@ func TestChatID(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, 12345, u.ChatID())
+	assert.Equal(t, int64(12345), u.ChatID())
 }
 
 func TestFromID(t *testing.T) {
@@ -52,7 +52,7 @@ func TestFromID(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, 23456, u.FromID())
+	assert.Equal(t, int64(23456), u.FromID())
 }
 
 func TestIsBotReply(t *testing.T) {
@@ -126,29 +126,29 @@ func TestDecode(t *testing.T) {
 	}
 
 	assert.NotNil(t, ur)
-	assert.Equal(t, 897497725, ur.UpdateID, "correct UpdateID")
+	assert.Equal(t, int64(897497725), ur.UpdateID, "correct UpdateID")
 
 	assert.NotNil(t, ur.Message)
-	assert.Equal(t, 4104, ur.Message.ID, "correct Message.ID")
-	assert.Equal(t, 144365044, ur.Message.From.ID, "correct Message.From.ID")
+	assert.Equal(t, int64(4104), ur.Message.ID, "correct Message.ID")
+	assert.Equal(t, int64(144365044), ur.Message.From.ID, "correct Message.From.ID")
 	assert.Equal(t, "John", ur.Message.From.FirstName, "correct Message.From.FirstName")
 	assert.Equal(t, "Doe", ur.Message.From.LastName, "correct Message.From.LastName")
 	assert.Equal(t, "jdoe", ur.Message.From.Username, "correct Message.From.Username")
 
 	assert.Equal(t, 1449369855, ur.Message.Date, "correct Message.Date")
 
-	assert.Equal(t, 144255044, ur.Message.Chat.ID, "correct Message.Chat.ID")
+	assert.Equal(t, int64(144255044), ur.Message.Chat.ID, "correct Message.Chat.ID")
 	assert.Equal(t, "private", ur.Message.Chat.Type, "correct Message.Chat.Type")
 	assert.Equal(t, "John", ur.Message.Chat.FirstName, "correct Message.Chat.FirstName")
 	assert.Equal(t, "Doe", ur.Message.Chat.LastName, "correct Message.Chat.LastName")
 
 	assert.NotNil(t, ur.Message.ReplyToMessage)
-	assert.Equal(t, 3165, ur.Message.ReplyToMessage.ID, "correct Message.ReplyToMessage.ID")
-	assert.Equal(t, 141317493, ur.Message.ReplyToMessage.From.ID, "correct Message.ReplyToMessage.From.ID")
+	assert.Equal(t, int64(3165), ur.Message.ReplyToMessage.ID, "correct Message.ReplyToMessage.ID")
+	assert.Equal(t, int64(141317493), ur.Message.ReplyToMessage.From.ID, "correct Message.ReplyToMessage.From.ID")
 	assert.Equal(t, "Test Bot", ur.Message.ReplyToMessage.From.FirstName, "correct Message.ReplyToMessage.From.FirstName")
 	assert.Equal(t, "Test_Bot", ur.Message.ReplyToMessage.From.Username, "correct Message.ReplyToMessage.From.Username")
 	assert.Equal(t, 1449210338, ur.Message.ReplyToMessage.Date, "correct Message.ReplyToMessage.Date")
-	assert.Equal(t, 144354044, ur.Message.ReplyToMessage.Chat.ID, "correct Message.ReplyToMessage.Chat.ID")
+	assert.Equal(t, int64(144354044), ur.Message.ReplyToMessage.Chat.ID, "correct Message.ReplyToMessage.Chat.ID")
 	assert.Equal(t, "private", ur.Message.ReplyToMessage.Chat.Type, "correct Message.ReplyToMessage.Chat.Type")
 	assert.Equal(t, "John", ur.Message.ReplyToMessage.Chat.FirstName, "correct Message.ReplyToMessage.Chat.FirstName")
 	assert.Equal(t, "Doe", ur.Message.ReplyToMessage.Chat.LastName, "correct Message.ReplyToMessage.Chat.LastName")

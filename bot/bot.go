@@ -214,10 +214,10 @@ func (b *Bot) PostSendDocument(document *SendDocument) error {
 		return err
 	}
 
-	writer.WriteField("chat_id", strconv.Itoa(document.ChatID))
+	writer.WriteField("chat_id", strconv.FormatInt(document.ChatID, 10))
 
 	if document.ReplyToMessageID > 0 {
-		writer.WriteField("reply_to_message_id", strconv.Itoa(document.ReplyToMessageID))
+		writer.WriteField("reply_to_message_id", strconv.FormatInt(document.ReplyToMessageID, 10))
 	}
 
 	if document.ReplyMarkup != nil {

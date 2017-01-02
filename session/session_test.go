@@ -18,8 +18,8 @@ func TestNewMemorySession(t *testing.T) {
 
 	aSession, err = s.SessionByAuthorIDAndChatID(100, 200)
 	assert.NoError(t, err)
-	assert.Equal(t, 100, aSession.AuthorID(), "correct AuthorID")
-	assert.Equal(t, 200, aSession.ChatID(), "correct ChatID")
+	assert.Equal(t, int64(100), aSession.AuthorID(), "correct AuthorID")
+	assert.Equal(t, int64(200), aSession.ChatID(), "correct ChatID")
 	assert.Equal(t, 5, aSession.StateID(), "correct StateID")
 	assert.Equal(t, "my data", aSession.Data(), "correct data")
 

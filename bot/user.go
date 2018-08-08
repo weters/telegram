@@ -6,6 +6,7 @@ type User struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name,omitempty"`
 	Username  string `json:"username,omitempty"`
+	IsBot     bool   `json:"is_bot,omitempty"`
 }
 
 // DisplayName will return the display name of the user or bot.
